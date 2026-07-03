@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package event_service;
+
+service EventService {
+    rpc SaveEvent(SaveEventsRequest) returns (SaveEventsResponse);
+    rpc GetEvents(GetEventsRequest) returns (GetEventsResponse);
+    rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
+}
+
+enum EventStatus {
+    UNSPECIFIED = 0;
+    SUCCESS = 1;
+    ERROR = 2;
+}
+
+enum FilterDecision {
+    FILTER_DECISION_UNSPECIFIED = 0;
+    ACCEPTED = 1;
+    REJECTED = 2;
+}
+
+message Event {
+    string source_service = 1;
+    string timestamp_utc = 2;
+    EventStatus status = 3;
+    EventPayload payload = 4;
+}
+
+message EventPayload {
+    string raw_line = 1;
+    optional string parsed_ip = 2;
+    FilterDecision filter_decision = 3;
+    optional string reject_reason = 4;
+}
+
+
+// SaveEvent
+
+message SaveEventsRequest {
+    repeated Event event = 1;
+}
+
+message SaveEventsResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// GetEvents
+
+message GetEventsRequest {
+    optional string source_service = 1;
+    optional EventStatus status = 2;
+    optional uint32 limit = 3;
+    optional google.protobuf.Timestamp from = 4;
+    optional google.protobuf.Timestamp to = 5;
+    optional uint32 offset = 6;
+}
+
+message GetEventsResponse {
+    repeated Event events = 1;
+    bool success = 2;
+    string message = 3;
+}
+
+// GetStats
+
+message GetStatsRequest {
+}
+
+message Stats {
+    uint64 total_events = 1;
+    uint64 success_events = 2;
+    uint64 error_events = 3;
+}
+
+message GetStatsResponse {
+    Stats stats = 1;
+    bool success = 2;
+    string message = 3;
+}
