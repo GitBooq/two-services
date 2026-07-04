@@ -1,6 +1,6 @@
 # gRPC NETWORK
 add_library(client_network STATIC
-    grpc_event_saver.cc)
+    grpc_service.cc)
 
 target_link_libraries(client_network 
     PUBLIC
