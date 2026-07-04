@@ -1,7 +1,8 @@
 // core/interfaces/i_event_builder.h
 #pragma once
 
-#include "core/entities/event.h"
+#include "event.h"
+
 #include "net_logger/types.h" // for LogEntry
 
 class IEventBuilder {

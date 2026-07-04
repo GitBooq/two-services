@@ -1,3 +1,4 @@
+// core/interfaces/i_stats_provider.h
 /*
     Stats provider interface
 */

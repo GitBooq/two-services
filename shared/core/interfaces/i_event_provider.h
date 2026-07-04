@@ -1,3 +1,4 @@
+// core/interfaces/i_event_provider.h
 /*
     Events provider interface
 
@@ -13,6 +14,7 @@ GetEvents' Filters
 #pragma once
 
 #include "event.h"
+
 #include <vector>
 
 namespace event_service {
