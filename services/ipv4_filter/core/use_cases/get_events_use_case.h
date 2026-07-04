@@ -5,21 +5,25 @@
 
 #include <memory>
 #include <net_logger/net_logger.h>
+#include <optional>
+#include <vector>
 
 /*
-    Get Events from Server 
+    Get Events from Server
 */
 class GetEventsUseCase { // IEventProvider
 public:
   struct Request {
-  };
-  
-  struct Response {
+    dto::EventFilter filter;
   };
 
-  GetEventsUseCase();
+  struct Result {
+    std::optional<std::vector<dto::Event>> events;
+  };
 
-  Response Execute(const Request &request);
+  GetEventsUseCase(std::shared_ptr<event_service::IEventProvider> provider);
+
+  Result Execute(const Request &request);
 
 private:
   std::shared_ptr<event_service::IEventProvider> provider_;
