@@ -21,7 +21,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     )
 endif()
 
-#include(CTest)
+include(CTest) # flask
 include(FetchContent)
 
 if(ENABLE_SANITIZERS)
@@ -60,13 +60,21 @@ find_package(gRPC CONFIG REQUIRED)
 #protobuf
 add_subdirectory(proto)
 
+#shared
+add_subdirectory(shared)
+
 #client service
-add_subdirectory(app-client)
+#add_subdirectory(services/ipv4_filter)
 
 #server service
-#add_subdirectory(server)
+#add_subdirectory(services/history)
 
 # libpqxx::pqxx     // postgresql
 # netFilterLogger   // ipv4filter
 # proto_generated   // protobuf
 # 
+
+option(BUILD_TESTS "BUILD_TESTS" ON)
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
