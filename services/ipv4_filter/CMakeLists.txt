@@ -48,7 +48,7 @@ target_link_libraries(client
         client_adapters
         client_network
         client_config
-        client_logging
+        #client_logging
         shared_entities
         shared_interfaces
         shared_utils

@@ -72,7 +72,7 @@ add_subdirectory(services/ipv4_filter)
 # libpqxx::pqxx     // postgresql
 # netFilterLogger   // ipv4filter
 # proto_generated   // protobuf
-# 
+# gRPC::grpc++
 
 option(BUILD_TESTS "BUILD_TESTS" ON)
 if(BUILD_TESTS)

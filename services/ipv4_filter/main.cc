@@ -12,6 +12,9 @@
 #include <sstream>
 #include <string>
 
+int main() {}
+
+#if 0
 namespace {
 
 // clang-format off
@@ -79,3 +82,4 @@ int main(int argc, char **argv) {
 
   return 0;
 }
+#endif
