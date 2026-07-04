@@ -64,7 +64,7 @@ add_subdirectory(proto)
 add_subdirectory(shared)
 
 #client service
-#add_subdirectory(services/ipv4_filter)
+add_subdirectory(services/ipv4_filter)
 
 #server service
 #add_subdirectory(services/history)

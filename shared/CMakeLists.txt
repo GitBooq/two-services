@@ -19,6 +19,7 @@ target_include_directories(shared_interfaces
 target_link_libraries(shared_interfaces
     INTERFACE
         shared_entities
+        netFilterLogger
 )
 
 # UTILS
@@ -38,3 +39,4 @@ target_link_libraries(shared_utils
 )
 
 target_compile_features(shared_utils PUBLIC cxx_std_20)
+

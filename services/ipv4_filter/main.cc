@@ -4,11 +4,8 @@
 //
 
 
-#include "config.h"
-#include "event_builder.h"
-#include "event_pipeline.h"
-#include "filter_runner.h"
-#include "grpc_service.h"
+#include <iostream>
+
 
 #include <fstream>
 #include <net_logger/net_logger.h>
