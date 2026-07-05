@@ -67,7 +67,7 @@ add_subdirectory(shared)
 add_subdirectory(services/ipv4_filter)
 
 #server service
-#add_subdirectory(services/history)
+add_subdirectory(services/history)
 
 # libpqxx::pqxx     // postgresql
 # netFilterLogger   // ipv4filter

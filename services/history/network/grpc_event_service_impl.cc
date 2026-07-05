@@ -76,10 +76,24 @@ GrpcEventServiceImpl::GetEvents([[maybe_unused]] grpc::ServerContext *context,
   // TODO: auto proto_events = ToProtoEvents
   // 5. Set Response & Return Status
   // TODO: response->...
+  (void)response;
+  return {grpc::OK, ""};
 }
 
-grpc::Status GrpcEventServiceImpl([[maybe_unused]] grpc::ServerContext *context,
+grpc::Status GrpcEventServiceImpl::GetStats([[maybe_unused]] grpc::ServerContext *context,
                                   const event_service::GetStatsRequest *request,
-                                  event_service::GetStatsResponse *response) {}
+                                  event_service::GetStatsResponse *response) {
+  // 1. Log Request
+  // TODO
+  // 2. Call Use Case
+  // TODO: auto stats = get stats use case
+  (void)request;
+  // 3. domain -> proto conversion
+  // TODO dto stats -> proto stats
+  // 4. Set Response & Return Status
+  // TODO: response->...
+  (void)response;
+  return {grpc::OK, ""};
+}
 
 } // namespace event_service
