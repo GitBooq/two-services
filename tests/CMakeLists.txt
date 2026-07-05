@@ -36,9 +36,13 @@ target_compile_features(shared_tests PUBLIC cxx_std_20)
 
 gtest_discover_tests(shared_tests)
 
+set(TESTS_SRC_DIR "services/ipv4_filter/core/use_cases")
+
 # SaveEventUseCase
 add_executable(save_event_use_case_test
-    services/ipv4_filter/core/use_cases/save_event_use_case_test.cc
+    ${TESTS_SRC_DIR}/save_event_use_case_test.cc
+    ${TESTS_SRC_DIR}/get_events_use_case_test.cc
+    ${TESTS_SRC_DIR}/get_stats_use_case_test.cc
 )
 
 target_link_libraries(save_event_use_case_test
