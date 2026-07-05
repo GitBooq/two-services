@@ -36,6 +36,14 @@ message EventPayload {
     optional string reject_reason = 4;
 }
 
+message EventFilter {
+    optional string source_service = 1;
+    optional EventStatus status = 2;
+    optional uint32 limit = 3;
+    optional google.protobuf.Timestamp from = 4;
+    optional google.protobuf.Timestamp to = 5;
+    optional uint32 offset = 6;
+}
 
 // SaveEvent
 
@@ -51,12 +59,7 @@ message SaveEventsResponse {
 // GetEvents
 
 message GetEventsRequest {
-    optional string source_service = 1;
-    optional EventStatus status = 2;
-    optional uint32 limit = 3;
-    optional google.protobuf.Timestamp from = 4;
-    optional google.protobuf.Timestamp to = 5;
-    optional uint32 offset = 6;
+    optional EventFilter event_filter = 1;
 }
 
 message GetEventsResponse {
