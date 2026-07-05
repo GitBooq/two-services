@@ -1,7 +1,7 @@
 #include "grpc_service.h"
 #include "event.h"
 #include "event_service.pb.h"
-#include "grpc_helpers.h"
+#include "utils.h"
 #include <optional>
 
 namespace event_service {
@@ -52,11 +52,12 @@ void GrpcService::HandleSaveEventsResponse(const grpc::Status &status,
 
 void GrpcService::AddEventToRequest(SaveEventsRequest &request,
                                     const dto::Event &event) {
+  // TODO: ToProtoEvent
   /* ok pattern: protobuf handles this raw ptrs (arena buffer) */
   auto *eventReq = request.add_event();
   eventReq->set_source_service(event.source_service);
   eventReq->set_timestamp_utc(event.timestamp_utc);
-  eventReq->set_status(proto::ToProtoEventStatus(event.status));
+  eventReq->set_status(ToProtoEventStatus(event.status));
 
   auto *reqPayload = eventReq->mutable_payload();
   const auto &evPayload = event.payload;
@@ -65,7 +66,7 @@ void GrpcService::AddEventToRequest(SaveEventsRequest &request,
     reqPayload->set_parsed_ip(evPayload.parsed_ip.value());
   }
   reqPayload->set_filter_decision(
-      proto::ToProtoFilterDecision(evPayload.filter_decision));
+      ToProtoFilterDecision(evPayload.filter_decision));
   if (evPayload.reject_reason.has_value()) {
     reqPayload->set_reject_reason(evPayload.reject_reason.value());
   }
@@ -94,25 +95,16 @@ GrpcService::GetEventsImpl(const dto::EventFilter &filter) const {
   return DoGetEventsRequest(request);
 }
 
-void GrpcService::AddFilterToRequest(GetEventsRequest &request,
-                                     const dto::EventFilter &filter) {
-  if (filter.source_service.has_value()) {
-    request.set_source_service(filter.source_service.value());
+void GrpcService::AddFilterToRequest(
+    GetEventsRequest &request, const std::optional<dto::EventFilter> &filter) {
+  if (!filter.has_value()) {
+    return;
   }
-  if (filter.status.has_value()) {
-    request.set_status(proto::ToProtoEventStatus(filter.status.value()));
-  }
-  if (filter.limit.has_value()) {
-    request.set_limit(static_cast<uint64_t>(filter.limit.value()));
-  }
-  if (filter.from.has_value()) {
-    *request.mutable_from() = proto::ToTimestampFromStr(filter.from.value());
-  }
-  if (filter.to.has_value()) {
-    *request.mutable_to() = proto::ToTimestampFromStr(filter.to.value());
-  }
-  if (filter.offset.has_value()) {
-    request.set_offset(static_cast<uint32_t>(filter.offset.value()));
+
+  std::optional<EventFilter> proto_event_filter = ToProtoEventFilter(filter);
+
+  if (proto_event_filter.has_value()) {
+    *request.mutable_event_filter() = *proto_event_filter;
   }
 }
 
@@ -132,7 +124,7 @@ GrpcService::DoGetEventsRequest(const GetEventsRequest &request) const {
   std::vector<dto::Event> events;
   events.reserve(response.events_size());
   for (const auto &protoEvent : response.events()) {
-    auto event = proto::ToDtoEvent(protoEvent);
+    auto event = ToDtoEvent(protoEvent);
     events.push_back(std::move(event));
   }
   return events;
@@ -179,7 +171,7 @@ GrpcService::DoGetStatsRequest(const GetStatsRequest &request) const {
     return std::nullopt;
   }
 
-  return proto::ToDtoStats(response.stats());
+  return ToDtoStats(response.stats());
 }
 
 void GrpcService::HandleGetStatsResponse(const grpc::Status &status,

@@ -3,7 +3,7 @@
 #include "utils.h"
 
 using namespace net::logger;
-using namespace builder_utils;
+using namespace utils::builder;
 
 TEST(UtilsTests, FormatTimestampReturnsCorrectStr) {
   // 1993-10-01 03:13:37 UTC

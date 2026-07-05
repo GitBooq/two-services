@@ -48,7 +48,7 @@ private:
   static void AddEventToRequest(SaveEventsRequest &request,
                                 const dto::Event &event);
   static void AddFilterToRequest(GetEventsRequest &request,
-                                 const dto::EventFilter &filter);
+                                 const std::optional<dto::EventFilter> &filter);
 
   static constexpr std::size_t kDefaultTimeout = 3000;
 

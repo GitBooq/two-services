@@ -36,6 +36,7 @@ target_link_libraries(shared_utils
     PUBLIC
         shared_entities
         netFilterLogger
+        proto_generated
 )
 
 target_compile_features(shared_utils PUBLIC cxx_std_20)
