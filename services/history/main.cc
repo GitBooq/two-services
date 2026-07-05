@@ -9,7 +9,7 @@
 #include "grpc_event_service_impl.h"
 
 int main() {
-
+#if 0
   // using namespace datatransfer;
   // auto port = helpers::GetServerPortOr50051();
   std::string server_address("0.0.0.0:50051");
@@ -26,4 +26,5 @@ int main() {
 
   server->Wait();
   return 0;
+#endif
 }

@@ -8,6 +8,9 @@
 #include <memory>
 
 #include "event_service.grpc.pb.h"
+#include "i_get_events_use_case.h"
+#include "i_get_stats_use_case.h"
+#include "i_save_event_use_case.h"
 
 namespace event_service {
 /*
@@ -20,6 +23,11 @@ Implements event service from gRPC protobuf contract:
 */
 class GrpcEventServiceImpl : public EventService::Service {
 public:
+  explicit GrpcEventServiceImpl(
+      std::shared_ptr<ISaveEventUseCase> save_event_use_case,
+      std::shared_ptr<IGetEventsUseCase> get_events_use_case,
+      std::shared_ptr<IGetStatsUseCase> get_stats_use_case);
+
   // Receive SaveEvent RPC -> Save Event(s) to DB Use Case
   grpc::Status SaveEvent(grpc::ServerContext *context,
                          const event_service::SaveEventsRequest *request,
@@ -39,6 +47,10 @@ public:
 
 private:
   static grpc::Status Validate(const event_service::SaveEventsRequest *request);
+
+  std::shared_ptr<ISaveEventUseCase> save_event_use_case_;
+  std::shared_ptr<IGetEventsUseCase> get_events_use_case_;
+  std::shared_ptr<IGetStatsUseCase> get_stats_use_case_;
 };
 
 } // namespace event_service

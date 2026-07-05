@@ -25,7 +25,7 @@ GrpcEventServiceImpl::SaveEvent([[maybe_unused]] grpc::ServerContext *context,
     events.push_back(ToDtoEvent(event));
   }
   // 4. Call Use Case
-  // TODO
+  // TODO auto result = m_saveEventUseCase->execute(events);
   // 5. Log success/error
   // TODO
   // 6. Set Response & Return Status
@@ -71,7 +71,7 @@ GrpcEventServiceImpl::GetEvents([[maybe_unused]] grpc::ServerContext *context,
   // 2. proto -> domain conversion
   auto event_filter = FromProtoEventFilter(request->event_filter());
   // 3. Call Use Case
-  // TODO: vector<events> events = getEventsUseCase
+  // TODO: vector<events> events = m_getEventsUseCase->execute(event_filter);
   // 4. domain -> proto conversion
   // TODO: auto proto_events = ToProtoEvents
   // 5. Set Response & Return Status
