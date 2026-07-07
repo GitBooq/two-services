@@ -2,6 +2,7 @@
 #pragma once
 
 #include "event.h"
+#include "result.h"
 
 #include <optional>
 #include <vector>
@@ -9,6 +10,6 @@
 class IGetEventsUseCase {
 public:
   virtual ~IGetEventsUseCase() = default;
-  virtual std::vector<dto::Event>
+  virtual shared::Result<std::vector<dto::Event>>
   Execute(const std::optional<dto::EventFilter> &filter) = 0;
 };

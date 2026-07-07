@@ -12,7 +12,7 @@ class SaveEventUseCase : public ISaveEventUseCase {
 public:
   explicit SaveEventUseCase(std::shared_ptr<IEventRepository> repository);
 
-  SaveEventResult Execute(const std::vector<dto::Event> &events) override;
+  shared::Result<> Execute(const std::vector<dto::Event> &events) override;
 
 private:
   std::shared_ptr<IEventRepository> repository_;

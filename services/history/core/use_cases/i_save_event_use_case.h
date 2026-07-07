@@ -2,17 +2,12 @@
 #pragma once
 
 #include "event.h"
+#include "result.h"
 
-#include <string>
 #include <vector>
-
-struct SaveEventResult {
-  bool success;
-  std::string error_message;
-};
 
 class ISaveEventUseCase {
 public:
   virtual ~ISaveEventUseCase() = default;
-  virtual SaveEventResult Execute(const std::vector<dto::Event> &events) = 0;
+  virtual shared::Result<> Execute(const std::vector<dto::Event> &events) = 0;
 };

@@ -1,11 +1,21 @@
 #include <grpcpp/support/status.h>
 
+#include <utility>
+
 #include "event.h"
 #include "event_service.pb.h"
 #include "grpc_event_service_impl.h"
 #include "utils.h"
 
 namespace event_service {
+
+GrpcEventServiceImpl::GrpcEventServiceImpl(
+    std::shared_ptr<ISaveEventUseCase> save_event_use_case,
+    std::shared_ptr<IGetEventsUseCase> get_events_use_case,
+    std::shared_ptr<IGetStatsUseCase> get_stats_use_case)
+    : save_event_use_case_(std::move(save_event_use_case)),
+      get_events_use_case_(std::move(get_events_use_case)),
+      get_stats_use_case_(std::move(get_stats_use_case)) {}
 
 grpc::Status
 GrpcEventServiceImpl::SaveEvent([[maybe_unused]] grpc::ServerContext *context,
@@ -25,13 +35,71 @@ GrpcEventServiceImpl::SaveEvent([[maybe_unused]] grpc::ServerContext *context,
     events.push_back(ToDtoEvent(event));
   }
   // 4. Call Use Case
-  // TODO auto result = m_saveEventUseCase->execute(events);
+  auto result = save_event_use_case_->Execute(events);
   // 5. Log success/error
   // TODO
   // 6. Set Response & Return Status
-  response->set_success(true);
-  response->set_message("Event(s) received and saved successfully.");
+  response->set_success(result.success);
+  response->set_message(result.success
+                            ? "Event(s) received and saved successfully."
+                            : result.error_message);
+
   return status;
+}
+
+grpc::Status
+GrpcEventServiceImpl::GetEvents([[maybe_unused]] grpc::ServerContext *context,
+                                const event_service::GetEventsRequest *request,
+                                event_service::GetEventsResponse *response) {
+  // 1. Log Request
+  // TODO
+  // 2. proto -> domain conversion
+  auto event_filter = FromProtoEventFilter(request->event_filter());
+  // 3. Call Use Case
+  auto result = get_events_use_case_->Execute(event_filter);
+  if (!result.success) {
+    response->set_success(false);
+    response->set_message(result.error_message);
+    return grpc::Status::OK;
+  }
+
+  if (!result.data.has_value() || result.data->empty()) {
+    response->set_success(true);
+    response->set_message("No events found");
+    return grpc::Status::OK;
+  }
+  // 4. domain -> proto conversion; add events to response
+  const auto &events = result.data.value();
+  for (const auto &event : events) {
+    auto *proto_event = response->add_events();
+    *proto_event = ToProtoEvent(event);
+  }
+  // 5. Set Response & Return Status
+  response->set_success(true);
+  response->set_message("GetEvents successful.");
+  return grpc::Status::OK;
+}
+
+grpc::Status GrpcEventServiceImpl::GetStats(
+    [[maybe_unused]] grpc::ServerContext *context,
+    [[maybe_unused]] const event_service::GetStatsRequest *request,
+    event_service::GetStatsResponse *response) {
+  // 1. Log Request
+  // TODO
+  // 2. Call Use Case
+  auto result = get_stats_use_case_->Execute();
+  if (!result.success || !result.data.has_value()) {
+    response->set_success(false);
+    response->set_message(result.error_message);
+    return grpc::Status::OK;
+  }
+  // 3. domain -> proto conversion
+  Stats proto_stats = ToProtoStats(result.data.value());
+  // 4. Set Response & Return Status
+  *response->mutable_stats() = std::move(proto_stats);
+  response->set_success(true);
+  response->set_message("GetStats successful.");
+  return grpc::Status::OK;
 }
 
 grpc::Status GrpcEventServiceImpl::Validate(
@@ -59,40 +127,6 @@ grpc::Status GrpcEventServiceImpl::Validate(
               "filter_decision must be 'accepted' or 'rejected'."};
     }
   }
-  return {grpc::OK, ""};
-}
-
-grpc::Status
-GrpcEventServiceImpl::GetEvents([[maybe_unused]] grpc::ServerContext *context,
-                                const event_service::GetEventsRequest *request,
-                                event_service::GetEventsResponse *response) {
-  // 1. Log Request
-  // TODO
-  // 2. proto -> domain conversion
-  auto event_filter = FromProtoEventFilter(request->event_filter());
-  // 3. Call Use Case
-  // TODO: vector<events> events = m_getEventsUseCase->execute(event_filter);
-  // 4. domain -> proto conversion
-  // TODO: auto proto_events = ToProtoEvents
-  // 5. Set Response & Return Status
-  // TODO: response->...
-  (void)response;
-  return {grpc::OK, ""};
-}
-
-grpc::Status GrpcEventServiceImpl::GetStats([[maybe_unused]] grpc::ServerContext *context,
-                                  const event_service::GetStatsRequest *request,
-                                  event_service::GetStatsResponse *response) {
-  // 1. Log Request
-  // TODO
-  // 2. Call Use Case
-  // TODO: auto stats = get stats use case
-  (void)request;
-  // 3. domain -> proto conversion
-  // TODO dto stats -> proto stats
-  // 4. Set Response & Return Status
-  // TODO: response->...
-  (void)response;
   return {grpc::OK, ""};
 }
 

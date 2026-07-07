@@ -13,7 +13,7 @@ class GetEventsUseCase : public IGetEventsUseCase {
 public:
   explicit GetEventsUseCase(std::shared_ptr<IEventRepository> repository);
 
-  std::vector<dto::Event>
+  shared::Result<std::vector<dto::Event>>
   Execute(const std::optional<dto::EventFilter> &filter) override;
 
 private:

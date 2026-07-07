@@ -11,7 +11,7 @@ class GetStatsUseCase : public IGetStatsUseCase {
 public:
   explicit GetStatsUseCase(std::shared_ptr<IEventRepository> repository);
 
-  dto::Stats Execute() override;
+  shared::Result<dto::Stats> Execute() override;
 
 private:
   std::shared_ptr<IEventRepository> repository_;
