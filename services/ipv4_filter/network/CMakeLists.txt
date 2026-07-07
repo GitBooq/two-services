@@ -6,7 +6,7 @@ target_link_libraries(client_network
     PUBLIC
         proto_generated
         gRPC::grpc++
-        shared_interfaces
+        client_interfaces
         shared_utils)
 
 target_include_directories(client_network 

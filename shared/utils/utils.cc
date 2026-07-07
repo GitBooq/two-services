@@ -28,12 +28,10 @@ FilterRejectReasonToStr(net::logger::RejectReason reason) {
 
 std::string GetFilterDecision(net::logger::RejectReason reason) {
   switch (reason) {
-  case net::logger::RejectReason::FilterRejected:
-    return "rejected";
   case net::logger::RejectReason::None:
     return "accepted";
   default:
-    return "";
+    return "rejected";
   }
 }
 
@@ -234,6 +232,38 @@ ToProtoEventFilter(const std::optional<dto::EventFilter> &dto_event_filter) {
   }
 
   return proto_event_filter;
+}
+
+Event ToProtoEvent(const dto::Event &event) {
+  /* ok pattern: protobuf handles this raw ptrs (arena buffer) */
+
+  Event proto_event;
+  proto_event.set_source_service(event.source_service);
+  proto_event.set_timestamp_utc(event.timestamp_utc);
+  proto_event.set_status(ToProtoEventStatus(event.status));
+
+  auto *proto_payload = proto_event.mutable_payload();
+  const auto &evPayload = event.payload;
+  proto_payload->set_raw_line(evPayload.raw_line);
+  if (evPayload.parsed_ip.has_value()) {
+    proto_payload->set_parsed_ip(evPayload.parsed_ip.value());
+  }
+  proto_payload->set_filter_decision(
+      ToProtoFilterDecision(evPayload.filter_decision));
+  if (evPayload.reject_reason.has_value()) {
+    proto_payload->set_reject_reason(evPayload.reject_reason.value());
+  }
+
+  return proto_event;
+}
+
+Stats ToProtoStats(const dto::Stats &stats) {
+  Stats proto_stats;
+  proto_stats.set_total_events(stats.events_total);
+  proto_stats.set_success_events(stats.events_success);
+  proto_stats.set_error_events(stats.events_error);
+
+  return proto_stats;
 }
 
 } // namespace event_service

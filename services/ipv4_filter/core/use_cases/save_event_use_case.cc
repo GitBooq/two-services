@@ -14,10 +14,14 @@ bool SaveEventUseCase::Execute(const Request &request) {
   std::vector<dto::Event> events;
 
   net::logger::ProcessStream(
-      *request.input, request.filter,
+      request.input, request.filter,
       [this, &events](std::span<const net::logger::LogEntry> batch) {
         for (const auto &entry : batch) {
-          events.push_back(builder_->Build(entry));
+          const auto &event = builder_->Build(entry);
+          // skip events from empty logs (raw_line == "")
+          if (event.has_value()) {
+            events.push_back(*event);
+          }
         }
       });
 

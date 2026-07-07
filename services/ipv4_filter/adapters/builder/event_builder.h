@@ -15,7 +15,8 @@ public:
   explicit EventBuilder(std::string_view src_service_name)
       : src_service_name_(src_service_name) {}
 
-  dto::Event Build(const net::logger::LogEntry &log_entry) override;
+  std::optional<dto::Event>
+  Build(const net::logger::LogEntry &log_entry) override;
 
 private:
   std::string src_service_name_;

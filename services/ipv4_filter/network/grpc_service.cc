@@ -52,24 +52,9 @@ void GrpcService::HandleSaveEventsResponse(const grpc::Status &status,
 
 void GrpcService::AddEventToRequest(SaveEventsRequest &request,
                                     const dto::Event &event) {
-  // TODO: ToProtoEvent
   /* ok pattern: protobuf handles this raw ptrs (arena buffer) */
   auto *eventReq = request.add_event();
-  eventReq->set_source_service(event.source_service);
-  eventReq->set_timestamp_utc(event.timestamp_utc);
-  eventReq->set_status(ToProtoEventStatus(event.status));
-
-  auto *reqPayload = eventReq->mutable_payload();
-  const auto &evPayload = event.payload;
-  reqPayload->set_raw_line(evPayload.raw_line);
-  if (evPayload.parsed_ip.has_value()) {
-    reqPayload->set_parsed_ip(evPayload.parsed_ip.value());
-  }
-  reqPayload->set_filter_decision(
-      ToProtoFilterDecision(evPayload.filter_decision));
-  if (evPayload.reject_reason.has_value()) {
-    reqPayload->set_reject_reason(evPayload.reject_reason.value());
-  }
+  *eventReq = ToProtoEvent(event);
 }
 
 bool GrpcService::DoSaveRequest(const SaveEventsRequest &request) const {

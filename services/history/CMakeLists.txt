@@ -43,7 +43,6 @@ target_link_libraries(history_server
     PRIVATE
         server_network
         shared_entities
-        shared_interfaces
         shared_utils
         application_logic
         proto_generated

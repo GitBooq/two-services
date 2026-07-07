@@ -4,7 +4,7 @@ add_library(client_adapters STATIC
 
 target_link_libraries(client_adapters 
     PUBLIC
-        shared_interfaces
+        client_interfaces
         shared_utils)
 
 target_include_directories(client_adapters 

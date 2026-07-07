@@ -12,4 +12,5 @@ struct Stats {
   std::size_t events_success;
   std::size_t events_error;
 };
+
 } // namespace dto

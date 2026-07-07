@@ -7,7 +7,6 @@ target_link_libraries(server_network
     PUBLIC
         proto_generated
         gRPC::grpc++
-        shared_interfaces
         shared_utils
         core_interfaces
 )

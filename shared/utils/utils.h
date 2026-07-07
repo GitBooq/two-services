@@ -1,6 +1,5 @@
 #include <chrono>
 #include <cstdint>
-#include <stdexcept>
 
 #include "event.h"
 #include "event_service.pb.h"
@@ -48,5 +47,9 @@ FromProtoEventFilter(const std::optional<EventFilter> &event_filter);
 
 std::optional<EventFilter>
 ToProtoEventFilter(const std::optional<dto::EventFilter> &event_filter);
+
+Event ToProtoEvent(const dto::Event &event);
+
+Stats ToProtoStats(const dto::Stats &stats);
 
 } // namespace event_service

@@ -8,7 +8,7 @@ add_library(client_use_cases STATIC
 target_link_libraries(client_use_cases
     PUBLIC
         shared_entities
-        shared_interfaces
+        client_interfaces
         shared_utils
 )
 
@@ -19,11 +19,25 @@ target_include_directories(client_use_cases
 
 target_compile_features(client_use_cases PUBLIC cxx_std_20)
 
+# INTERFACES
+add_library(client_interfaces INTERFACE)
+
+target_include_directories(client_interfaces
+    INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/adapters/interfaces
+)
+
+target_link_libraries(client_interfaces
+    INTERFACE
+        shared_entities
+        netFilterLogger
+)
+
 # ADAPTERS
-add_subdirectory(infrastructure/adapters)
+add_subdirectory(adapters)
 
 # gRPC
-add_subdirectory(infrastructure/network)
+add_subdirectory(network)
 
 # CONFIG
 add_library(client_config INTERFACE
@@ -36,13 +50,13 @@ target_link_libraries(client_config
 
 target_include_directories(client_config
     INTERFACE
-        ${CMAKE_CURRENT_SOURCE_DIR}/infrastructure/config
+        ${CMAKE_CURRENT_SOURCE_DIR}/config
 )
 
 # CLIENT EXE
-add_executable(client main.cc)
+add_executable(ipv4filter_client main.cc)
 
-target_link_libraries(client
+target_link_libraries(ipv4filter_client
     PRIVATE
         client_use_cases
         client_adapters
@@ -50,10 +64,10 @@ target_link_libraries(client
         client_config
         #client_logging
         shared_entities
-        shared_interfaces
+        client_interfaces
         shared_utils
         proto_generated
         netFilterLogger
 )
 
-target_compile_features(client PUBLIC cxx_std_20)
+target_compile_features(ipv4filter_client PUBLIC cxx_std_20)

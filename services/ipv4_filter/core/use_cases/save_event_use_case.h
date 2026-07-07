@@ -13,7 +13,7 @@
 class SaveEventUseCase {
 public:
   struct Request {
-    std::shared_ptr<std::istream> input;
+    std::istream& input;
     net::logger::CompositeFilter filter;
     std::string source_service_name;
   };

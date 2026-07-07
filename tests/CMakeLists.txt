@@ -48,7 +48,6 @@ add_executable(save_event_use_case_test
 target_link_libraries(save_event_use_case_test
     GTest::gtest_main
     GTest::gmock_main
-    shared_interfaces
     client_use_cases
 )
 
