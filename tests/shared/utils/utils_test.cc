@@ -53,8 +53,8 @@ TEST(UtilsTest, GetFilterDecisionRetrunsCorrectStr) {
   auto decision_from_filter_rejected_str = GetFilterDecision(filter_rejected);
   auto decision_from_none = GetFilterDecision(none);
 
-  EXPECT_EQ(decision_from_inv_format_str, std::string(""));
-  EXPECT_EQ(decision_from_ivalid_ip_str, std::string(""));
+  EXPECT_EQ(decision_from_inv_format_str, std::string("rejected"));
+  EXPECT_EQ(decision_from_ivalid_ip_str, std::string("rejected"));
   EXPECT_EQ(decision_from_filter_rejected_str,std::string("rejected"));
   EXPECT_EQ(decision_from_none,std::string("accepted"));
 }

@@ -26,8 +26,7 @@ TEST_F(SaveEventUseCaseTest, ExecuteCallsBuildForEachLogAndSaveBatchOnce) {
   std::stringstream input;
   input << "1\n2\n3\n";
 
-  SaveEventUseCase::Request request;
-  request.input = std::make_shared<std::stringstream>(std::move(input));
+  SaveEventUseCase::Request request{.input = input, .filter= {}, .source_service_name = {}};
 
   EXPECT_CALL(*builder_, Build(_))
       .Times(Exactly(3))
@@ -39,12 +38,10 @@ TEST_F(SaveEventUseCaseTest, ExecuteCallsBuildForEachLogAndSaveBatchOnce) {
   EXPECT_TRUE(result);
 }
 
-TEST_F(SaveEventUseCaseTest,
-       ExecuteWithEmptyInputCallsSaveBatchWithEmptySpan) {
+TEST_F(SaveEventUseCaseTest, ExecuteWithEmptyInputCallsSaveBatchWithEmptySpan) {
   std::stringstream input("");
 
-  SaveEventUseCase::Request request;
-  request.input = std::make_shared<std::stringstream>(std::move(input));
+  SaveEventUseCase::Request request{.input = input, .filter= {}, .source_service_name = {}};
 
   EXPECT_CALL(*builder_, Build(_)).Times(Exactly(0));
   // empty span match IsEmpty()

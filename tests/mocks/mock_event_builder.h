@@ -8,6 +8,6 @@
 
 class MockEventBuilder : public IEventBuilder {
 public:
-  MOCK_METHOD(dto::Event, Build, (const net::logger::LogEntry &log_entry),
+  MOCK_METHOD(std::optional<dto::Event>, Build, (const net::logger::LogEntry &log_entry),
               (override));
 };
