@@ -7,20 +7,14 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
       POSTGRES_DB: ${POSTGRES_DB:-mydb}
       POSTGRES_PORT: ${POSTGRES_PORT:-15432}
-
       POSTGRES_INITDB_ARGS: "--data-checksums" # data corruption check
-
     ports:
       - "${POSTGRES_PORT:-15432}:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data  # DBMS data
-
       # sync w/ local fs 
       - ./sql:/docker-entrypoint-initdb.d       # run all files [.sql;.sql.gz;.sh] on first start
-
     restart: unless-stopped
-
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-root} -d ${POSTGRES_DB:-mydb}"]
       interval: 10s
@@ -41,6 +35,36 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+
+  history-server:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: history-server
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      POSTGRES_DB: ${POSTGRES_DB:-mydb}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      SERVER_PORT: ${SERVER_PORT:-50051}
+    tty: true
+    stdin_open: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ipv4filter-client:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: ipv4filter_client
+    container_name: ipv4filter-client
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./data:/data
+    restart: "no"
 
 volumes:
   postgres_data:
