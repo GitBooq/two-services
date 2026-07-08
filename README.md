@@ -57,8 +57,8 @@ Client sends events in batch. Server saves them in db.
 Client send request w/ `filter`. Server make request to db applying filter and send events back.
 
 #### Filters
-   - from (timestamp)
-   - to (timestamp)
+   - from (timestamp) `unsupported in CLI`
+   - to (timestamp) `unsupported in CLI`
    - limit  (sql like)
    - offset (sql like)
    - status (`success` or `error`)
@@ -81,7 +81,7 @@ make server # start server and postgres
 ```
 *in another window:*
 ``` bash
-make client -- start client with CLI
+make client # start client with CLI
 ```
 ### Client CLI
 ``` bash
