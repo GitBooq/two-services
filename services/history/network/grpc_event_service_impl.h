@@ -29,10 +29,9 @@ public:
       std::shared_ptr<IGetStatsUseCase> get_stats_use_case);
 
   // Receive SaveEvent RPC -> Save Event(s) to DB Use Case
-  grpc::Status SaveEvent
-      [[maybe_unused]] (grpc::ServerContext *context,
-                        const event_service::SaveEventsRequest *request,
-                        event_service::SaveEventsResponse *response) override;
+  grpc::Status SaveEvent([[maybe_unused]] grpc::ServerContext *context,
+                         const event_service::SaveEventsRequest *request,
+                         event_service::SaveEventsResponse *response) override;
 
   // Receive GetEvents RPC -> Collect Events from DB Use Case -> Send Back to
   // Caller
