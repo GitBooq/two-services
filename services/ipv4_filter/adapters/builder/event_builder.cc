@@ -17,8 +17,8 @@ EventBuilder::Build(const net::logger::LogEntry &log_entry) {
 
   dto::Payload payload;
   payload.raw_line = log_entry.raw_line;
-  payload.parsed_ip =
-      utils::builder::IPv4AddressToString(log_entry.parsed_ip->ToUint32());
+  payload.parsed_ip = payload.parsed_ip ?
+      utils::builder::IPv4AddressToString(log_entry.parsed_ip->ToUint32()) : std::optional<std::string>{};
   payload.filter_decision = utils::builder::GetFilterDecision(log_entry.reason);
   payload.reject_reason =
       utils::builder::FilterRejectReasonToStr(log_entry.reason);

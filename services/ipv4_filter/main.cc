@@ -41,7 +41,8 @@ std::string GetTargetServerString(const std::string &host, uint16_t port) {
 
 // CLI
 
-dto::EventFilter ParseEventFilter(const std::vector<std::string> &args) {
+std::optional<dto::EventFilter>
+ParseEventFilter(const std::vector<std::string> &args) {
   dto::EventFilter filter;
 
   for (size_t i = 1; i < args.size(); ++i) {
@@ -50,6 +51,7 @@ dto::EventFilter ParseEventFilter(const std::vector<std::string> &args) {
     auto filter_type_it = filter.map.find(arg);
     if (filter_type_it == filter.map.cend()) {
       std::cerr << "Unknown parameter: " << arg << std::endl;
+      return std::nullopt;
     }
 
     const auto &[string, type] = *filter_type_it;
@@ -58,13 +60,12 @@ dto::EventFilter ParseEventFilter(const std::vector<std::string> &args) {
       std::cerr << "Missing value for parameter: " << string << std::endl;
       continue;
     }
+    ++i;
     switch (type) {
     case dto::EventFilter::Type::FROM:
-      filter.from = args[i];
-      break;
     case dto::EventFilter::Type::TO:
-      filter.to = args[i];
-      break;
+      std::cerr << "Unsupported filter param\n";
+      return std::nullopt;
     case dto::EventFilter::Type::LIMIT:
       filter.limit = std::stoi(args[i]);
       break;
@@ -78,7 +79,6 @@ dto::EventFilter ParseEventFilter(const std::vector<std::string> &args) {
       filter.source_service = args[i];
       break;
     }
-    ++i;
   }
 
   return filter;
@@ -93,8 +93,6 @@ dto::EventFilter ParseEventFilter(const std::vector<std::string> &args) {
   Exit                           - Exit program
 
 GetEvents options:
-  --from <timestamp>             - Filter events from timestamp
-  --to <timestamp>               - Filter events to timestamp
   --limit <number>               - Limit number of events
   --offset <number>              - Offset for pagination
   --status <status>              - Filter by status (success/error)
@@ -102,8 +100,8 @@ GetEvents options:
 
 Examples:
   Save path/to/log.txt
-  Get --limit 10 --status success
-  Get --from 2026-01-01 --to 2027-01-31
+  Get --limit 10 --offset 1
+  Get --status <success>
   Get --source_service ipv4_filter
 )";
 }
@@ -145,17 +143,30 @@ void HandleGetEvents(
     const std::vector<std::string> &args,
     const std::shared_ptr<GetEventsUseCase> &get_events_use_case) {
   auto filter = ParseEventFilter(args);
+  if (!filter.has_value()) {
+    std::cerr << "Invalid filter params.\n";
+    return;
+  }
 
-  GetEventsUseCase::Request request{filter};
+  GetEventsUseCase::Request request{filter.value()};
   auto result = get_events_use_case->Execute(request);
 
   if (result.events.has_value()) {
     const auto &events = result.events.value();
     std::cout << "Got " << events.size() << " events:\n";
+    std::cout << std::format(
+        "    {:<25} | {:<15} | {:<10} | {:<15} | {:<15} | {:<20} | {}\n",
+        "TIMESTAMP_UTC", "SOURCE_SERVICE", "STATUS", "FILTER_DECISION",
+        "PARSED_IP", "REJECT_REASON", "RAW_LINE");
     for (const auto &event : events) {
-      std::cout << "  - " << event.timestamp_utc << " | "
-                << event.source_service << " | "
-                << dto::Event::StatusToStr(event.status) << "\n";
+      const auto &payload = event.payload;
+      std::cout << std::format(
+          "  - {:<25} | {:<15} | {:<10} | {:<15} | {:<15} | {:<20} | {}\n",
+          event.timestamp_utc, event.source_service,
+          dto::Event::StatusToStr(event.status), payload.filter_decision,
+          payload.parsed_ip ? *payload.parsed_ip : "None",
+          payload.reject_reason ? *payload.reject_reason : "None",
+          payload.raw_line);
     }
   } else {
     std::cout << "Failed to get events.\n";
