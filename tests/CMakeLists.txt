@@ -36,30 +36,57 @@ target_compile_features(shared_tests PUBLIC cxx_std_20)
 
 gtest_discover_tests(shared_tests)
 
-set(TESTS_SRC_DIR "services/ipv4_filter/core/use_cases")
+set(CLIENT_TESTS_SRC_DIR "services/ipv4_filter")
+set(SERVER_TESTS_SRC_DIR "services/history")
 
-# SaveEventUseCase
-add_executable(save_event_use_case_test
-    ${TESTS_SRC_DIR}/save_event_use_case_test.cc
-    ${TESTS_SRC_DIR}/get_events_use_case_test.cc
-    ${TESTS_SRC_DIR}/get_stats_use_case_test.cc
+# EventsUseCases
+add_executable(event_use_cases_test
+    ${CLIENT_TESTS_SRC_DIR}/core/use_cases/save_event_use_case_test.cc
+    ${CLIENT_TESTS_SRC_DIR}/core/use_cases/get_events_use_case_test.cc
+    ${CLIENT_TESTS_SRC_DIR}/core/use_cases/get_stats_use_case_test.cc
 )
 
-target_link_libraries(save_event_use_case_test
+target_link_libraries(event_use_cases_test
     GTest::gtest_main
     GTest::gmock_main
     client_use_cases
 )
 
-target_include_directories(save_event_use_case_test 
+target_include_directories(event_use_cases_test 
     PRIVATE 
         ${CMAKE_SOURCE_DIR}/tests)
 
-target_compile_options(save_event_use_case_test PRIVATE
+target_compile_options(event_use_cases_test PRIVATE
     -O0
     -g
 )
 
-target_compile_features(save_event_use_case_test PUBLIC cxx_std_20)
+target_compile_features(event_use_cases_test PUBLIC cxx_std_20)
 
-gtest_discover_tests(save_event_use_case_test)
+gtest_discover_tests(event_use_cases_test)
+
+# Server grpc event service
+add_executable(grpc_event_service_test
+    ${SERVER_TESTS_SRC_DIR}/grpc_event_service_impl_test.cc
+)
+
+target_link_libraries(grpc_event_service_test
+    GTest::gtest_main
+    GTest::gmock_main
+    gRPC::grpc++
+    core_interfaces
+    server_network
+)
+
+target_include_directories(grpc_event_service_test 
+    PRIVATE 
+        ${CMAKE_SOURCE_DIR}/tests)
+
+target_compile_options(grpc_event_service_test PRIVATE
+    -O0
+    -g
+)
+
+target_compile_features(grpc_event_service_test PUBLIC cxx_std_20)
+
+gtest_discover_tests(grpc_event_service_test)

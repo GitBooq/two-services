@@ -1,7 +1,7 @@
 // tests/unit/get_events_use_case_test.cpp
 
 #include "get_events_use_case.h"
-#include "mocks/mock_event_provider.h"
+#include "mocks/client/mock_event_provider.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

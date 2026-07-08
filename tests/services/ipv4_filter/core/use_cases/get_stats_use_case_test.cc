@@ -1,7 +1,7 @@
 // tests/unit/get_stats_use_case_test.cc
 
 #include "get_stats_use_case.h"
-#include "mocks/mock_stats_provider.h"
+#include "mocks/client/mock_stats_provider.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

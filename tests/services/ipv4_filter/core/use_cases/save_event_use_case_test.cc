@@ -1,8 +1,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "mocks/mock_event_builder.h"
-#include "mocks/mock_event_saver.h"
+#include "mocks/client/mock_event_builder.h"
+#include "mocks/client/mock_event_saver.h"
 #include "save_event_use_case.h"
 
 using ::testing::_;
