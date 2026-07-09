@@ -21,7 +21,7 @@ public:
     std::optional<std::vector<dto::Event>> events;
   };
 
-  GetEventsUseCase(std::shared_ptr<event_service::IEventProvider> provider);
+  explicit GetEventsUseCase(std::shared_ptr<event_service::IEventProvider> provider);
 
   Result Execute(const Request &request);
 

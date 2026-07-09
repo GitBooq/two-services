@@ -26,14 +26,14 @@ TEST_F(SaveEventUseCaseTest, ExecuteCallsBuildForEachLogAndSaveBatchOnce) {
   std::stringstream input;
   input << "1\n2\n3\n";
 
-  SaveEventUseCase::Request request{.input = input, .filter= {}, .source_service_name = {}};
+  SaveEventUseCase::Request request{.filter= {}, .source_service_name = {}};
 
   EXPECT_CALL(*builder_, Build(_))
       .Times(Exactly(3))
       .WillRepeatedly(Return(dto::Event{}));
   EXPECT_CALL(*saver_, SaveBatch(_)).Times(Exactly(1)).WillOnce(Return(true));
 
-  bool result = use_case_->Execute(request);
+  bool result = use_case_->Execute(request, input);
 
   EXPECT_TRUE(result);
 }
@@ -41,7 +41,7 @@ TEST_F(SaveEventUseCaseTest, ExecuteCallsBuildForEachLogAndSaveBatchOnce) {
 TEST_F(SaveEventUseCaseTest, ExecuteWithEmptyInputCallsSaveBatchWithEmptySpan) {
   std::stringstream input("");
 
-  SaveEventUseCase::Request request{.input = input, .filter= {}, .source_service_name = {}};
+  SaveEventUseCase::Request request{.filter= {}, .source_service_name = {}};
 
   EXPECT_CALL(*builder_, Build(_)).Times(Exactly(0));
   // empty span match IsEmpty()
@@ -49,7 +49,7 @@ TEST_F(SaveEventUseCaseTest, ExecuteWithEmptyInputCallsSaveBatchWithEmptySpan) {
       .Times(Exactly(1))
       .WillOnce(Return(true));
 
-  bool result = use_case_->Execute(request);
+  bool result = use_case_->Execute(request, input);
 
   EXPECT_TRUE(result);
 }

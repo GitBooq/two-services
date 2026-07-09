@@ -48,8 +48,8 @@ ParseEventFilter(const std::vector<std::string> &args) {
   for (size_t i = 1; i < args.size(); ++i) {
     const auto &arg = args[i].substr(2); // skip '--'
 
-    auto filter_type_it = filter.map.find(arg);
-    if (filter_type_it == filter.map.cend()) {
+    auto filter_type_it = filter.kMap.find(arg);
+    if (filter_type_it == filter.kMap.cend()) {
       std::cerr << "Unknown parameter: " << arg << std::endl;
       return std::nullopt;
     }
@@ -123,15 +123,11 @@ HandleSaveEvent(const std::vector<std::string> &args,
     return;
   }
 
-  std::stringstream buffer;
-  buffer << input.rdbuf();
-
-  SaveEventUseCase::Request request{.input = buffer,
-                                    .filter =
+  SaveEventUseCase::Request request{.filter =
                                         net::logger::CreateFilter(cfg.filters),
                                     .source_service_name = cfg.service_name};
 
-  auto result = save_event_use_case->Execute(request);
+  auto result = save_event_use_case->Execute(request, input);
   if (result) {
     std::cout << "Events saved successfully.\n";
   } else {

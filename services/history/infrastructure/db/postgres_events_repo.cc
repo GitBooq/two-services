@@ -60,7 +60,6 @@ PostgresEventsRepo::SaveEvents(std::span<const dto::Event> events) {
       enum Query { ID = 0 };
       auto row_ref = res[0];
       int event_id = row_ref[Query::ID].as<int>();
-      (void)event_id;
       // or int event_id = res[0][0].as<int>();
 
       const auto &payload = event.payload;

@@ -33,12 +33,13 @@ struct Event {
 
 struct EventFilter {
   enum class Type { SRC_SRV = 0, STATUS, LIMIT, FROM, TO, OFFSET };
-  const std::map<std::string, Type> map{{"source_service", Type::SRC_SRV},
-                                        {"status", Type::STATUS},
-                                        {"limit", Type::LIMIT},
-                                        {"from", Type::FROM},
-                                        {"to", Type::TO},
-                                        {"offset", Type::OFFSET}};
+  static const inline std::map<std::string, Type> kMap{
+      {"source_service", Type::SRC_SRV},
+      {"status", Type::STATUS},
+      {"limit", Type::LIMIT},
+      {"from", Type::FROM},
+      {"to", Type::TO},
+      {"offset", Type::OFFSET}};
 
   std::optional<std::string> source_service;
   std::optional<Event::Status> status;

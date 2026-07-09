@@ -16,7 +16,7 @@ public:
     std::optional<dto::Stats> stats;
   };
 
-  GetStatsUseCase(std::shared_ptr<event_service::IStatsProvider> provider);
+  explicit GetStatsUseCase(std::shared_ptr<event_service::IStatsProvider> provider);
 
   Result Execute();
 

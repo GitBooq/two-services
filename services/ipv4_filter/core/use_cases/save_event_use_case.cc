@@ -10,11 +10,11 @@ SaveEventUseCase::SaveEventUseCase(
     std::shared_ptr<event_service::IEventSaver> saver)
     : builder_(std::move(builder)), saver_(std::move(saver)) {}
 
-bool SaveEventUseCase::Execute(const Request &request) {
+bool SaveEventUseCase::Execute(const Request &request, std::istream& input) {
   std::vector<dto::Event> events;
 
   net::logger::ProcessStream(
-      request.input, request.filter,
+      input, request.filter,
       [this, &events](std::span<const net::logger::LogEntry> batch) {
         for (const auto &entry : batch) {
           const auto &event = builder_->Build(entry);
