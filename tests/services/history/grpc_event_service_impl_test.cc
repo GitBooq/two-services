@@ -46,7 +46,7 @@ protected:
 };
 
 TEST_F(GrpcEventServiceImplTest, SaveEventSuccess) {
-  SaveEventsRequest request;
+  SaveEventRequest request;
   auto *event = request.add_event();
   event->set_timestamp_utc("2026-07-08T12:34:56Z");
   event->set_source_service("ipv4_filter");
@@ -73,7 +73,7 @@ TEST_F(GrpcEventServiceImplTest, SaveEventSuccess) {
 }
 
 TEST_F(GrpcEventServiceImplTest, SaveEventValidationError) {
-  SaveEventsRequest request;
+  SaveEventRequest request;
   SaveEventsResponse response;
 
   auto status = service_->SaveEvent(&context_, &request, &response);

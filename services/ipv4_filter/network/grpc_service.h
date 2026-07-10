@@ -21,7 +21,7 @@ class GrpcService : public IEventSaver,
 public:
   // timeout in ms
   explicit GrpcService(const std::shared_ptr<grpc::Channel> &channel,
-                       std::size_t timeout = kDefaultTimeout);
+                       std::size_t timeout = kDefaultUnaryRPCTimeoutSec);
 
   [[nodiscard]] bool Save(const dto::Event &event) const override;
   [[nodiscard]] bool
@@ -29,10 +29,11 @@ public:
   [[nodiscard]] std::optional<dto::Stats> GetStats() const override;
 
 private:
+  [[nodiscard]] bool SaveBatchStream(std::span<const dto::Event> &events) const;
   [[nodiscard]] std::optional<std::vector<dto::Event>>
   GetEventsImpl(const dto::EventFilter &filter) const override;
 
-  [[nodiscard]] bool DoSaveRequest(const SaveEventsRequest &request) const;
+  [[nodiscard]] bool DoSaveRequest(const SaveEventRequest &request) const;
   [[nodiscard]] std::optional<std::vector<dto::Event>>
   DoGetEventsRequest(const GetEventsRequest &request) const;
   [[nodiscard]] std::optional<dto::Stats>
@@ -45,12 +46,13 @@ private:
   static void HandleGetStatsResponse(const grpc::Status &status,
                                      const GetStatsResponse &response);
 
-  static void AddEventToRequest(SaveEventsRequest &request,
+  static void AddEventToRequest(SaveEventRequest &request,
                                 const dto::Event &event);
   static void AddFilterToRequest(GetEventsRequest &request,
                                  const std::optional<dto::EventFilter> &filter);
 
-  static constexpr std::size_t kDefaultTimeout = 3000;
+  static constexpr std::size_t kDefaultUnaryRPCTimeoutSec = 3000;
+  static constexpr std::size_t kDefaultStreamingTimeoutMin = 30;
 
   std::unique_ptr<EventService::Stub> stub_;
   std::size_t timeout_; //< timeout in ms

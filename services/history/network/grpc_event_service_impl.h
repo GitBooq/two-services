@@ -16,7 +16,8 @@ namespace event_service {
 /*
 Implements event service from gRPC protobuf contract:
   service EventService {
-    rpc SaveEvent(SaveEventsRequest) returns (SaveEventsResponse);
+    rpc SaveEvent(SaveEventRequest) returns (SaveEventsResponse);
+    rpc SaveEventsStream(stream SaveEventsRequest) returns (SaveEventsResponse);
     rpc GetEvents(GetEventsRequest) returns (GetEventsResponse);
     rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
   }
@@ -30,8 +31,13 @@ public:
 
   // Receive SaveEvent RPC -> Save Event(s) to DB Use Case
   grpc::Status SaveEvent([[maybe_unused]] grpc::ServerContext *context,
-                         const event_service::SaveEventsRequest *request,
+                         const event_service::SaveEventRequest *request,
                          event_service::SaveEventsResponse *response) override;
+
+  // Streaming RPC - Save events one by one
+  grpc::Status SaveEventsStream(grpc::ServerContext *context,
+                                grpc::ServerReader<SaveEventsRequest> *reader,
+                                SaveEventsResponse *response) override;
 
   // Receive GetEvents RPC -> Collect Events from DB Use Case -> Send Back to
   // Caller
@@ -47,6 +53,8 @@ public:
            event_service::GetStatsResponse *response) override;
 
 private:
+  static grpc::Status ValidateEvent(const Event &event);
+  static grpc::Status Validate(const event_service::SaveEventRequest *request);
   static grpc::Status Validate(const event_service::SaveEventsRequest *request);
 
   std::shared_ptr<ISaveEventUseCase> save_event_use_case_;

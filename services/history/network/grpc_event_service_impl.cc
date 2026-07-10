@@ -19,7 +19,7 @@ GrpcEventServiceImpl::GrpcEventServiceImpl(
 
 grpc::Status
 GrpcEventServiceImpl::SaveEvent([[maybe_unused]] grpc::ServerContext *context,
-                                const event_service::SaveEventsRequest *request,
+                                const event_service::SaveEventRequest *request,
                                 event_service::SaveEventsResponse *response) {
   // 1. Log Request
   // TODO
@@ -45,6 +45,94 @@ GrpcEventServiceImpl::SaveEvent([[maybe_unused]] grpc::ServerContext *context,
                             : result.error_message);
 
   return status;
+}
+
+grpc::Status GrpcEventServiceImpl::SaveEventsStream(
+    grpc::ServerContext *context, grpc::ServerReader<SaveEventsRequest> *reader,
+    SaveEventsResponse *response) {
+
+  try {
+    SaveEventsRequest request;
+    int total_events = 0;
+    int saved_events = 0;
+    std::vector<dto::Event> batch;
+    const size_t BATCH_SIZE = 1000;
+
+    // Read events from stream
+    while (reader->Read(&request)) {
+      auto status = Validate(&request);
+      if (!status.ok()) {
+        response->set_success(false);
+        response->set_message("Validation failed at event " +
+                              std::to_string(total_events) + ": " +
+                              status.error_message());
+        return grpc::Status::OK;
+      }
+
+      // proto -> domain conv
+      dto::Event dto_event = ToDtoEvent(request.event());
+      batch.push_back(dto_event);
+      total_events++;
+
+      // Save to db using batch
+      if (batch.size() >= BATCH_SIZE) {
+        auto result = save_event_use_case_->Execute(batch);
+        if (result.success) {
+          saved_events += batch.size();
+        } else {
+          response->set_success(false);
+          response->set_message("Failed to save batch at event " +
+                                std::to_string(total_events) + ": " +
+                                result.error_message);
+          return grpc::Status::OK;
+        }
+        batch.clear();
+
+        // Log
+        if (total_events % 10000 == 0) {
+          std::cout << "Stream progress: " << total_events
+                    << " events processed, " << saved_events << " saved"
+                    << std::endl;
+        }
+      }
+
+      // Client can cancel sending
+      if (context->IsCancelled()) {
+        response->set_success(false);
+        response->set_message("Cancelled by client at " +
+                              std::to_string(total_events) + " events");
+        return grpc::Status::CANCELLED;
+      }
+    }
+
+    // Save other events if any
+    if (!batch.empty()) {
+      auto result = save_event_use_case_->Execute(batch);
+      if (result.success) {
+        saved_events += batch.size();
+      } else {
+        response->set_success(false);
+        response->set_message("Failed to save final batch: " +
+                              result.error_message);
+        return grpc::Status::OK;
+      }
+    }
+
+    // response
+    response->set_success(true);
+    response->set_message("Saved " + std::to_string(saved_events) + "/" +
+                          std::to_string(total_events) + " events");
+
+    std::cout << "Stream completed: " << saved_events << "/" << total_events
+              << " events saved\n";
+
+    return grpc::Status::OK;
+
+  } catch (const std::exception &e) {
+    response->set_success(false);
+    response->set_message(std::string("Fatal error: ") + e.what());
+    return grpc::Status::OK;
+  }
 }
 
 grpc::Status
@@ -102,31 +190,49 @@ grpc::Status GrpcEventServiceImpl::GetStats(
   return grpc::Status::OK;
 }
 
-grpc::Status GrpcEventServiceImpl::Validate(
-    const event_service::SaveEventsRequest *request) {
-  if (0 == request->event_size()) {
+grpc::Status GrpcEventServiceImpl::Validate(const SaveEventRequest *request) {
+  if (request->event_size() == 0) {
     return {grpc::INVALID_ARGUMENT, "At least one event is required."};
   }
+
   for (const auto &event : request->event()) {
-    if (event.source_service() != "ipv4_filter") {
-      return {grpc::INVALID_ARGUMENT, "Unknown source_service."};
-    }
-    if (event.timestamp_utc().empty()) {
-      return {grpc::INVALID_ARGUMENT, "timestamp_utc is required."};
-    }
-    if (event.status() == EventStatus::UNSPECIFIED) {
-      return {grpc::INVALID_ARGUMENT, "status must be SUCCESS or ERROR"};
-    }
-    const auto &payload = event.payload();
-    if (payload.raw_line().empty()) {
-      return {grpc::INVALID_ARGUMENT, "payload raw_line is required"};
-    }
-    if (payload.filter_decision() ==
-        FilterDecision::FILTER_DECISION_UNSPECIFIED) {
-      return {grpc::INVALID_ARGUMENT,
-              "filter_decision must be 'accepted' or 'rejected'."};
+    auto status = ValidateEvent(event);
+    if (!status.ok()) {
+      return status;
     }
   }
+
+  return {grpc::OK, ""};
+}
+
+grpc::Status GrpcEventServiceImpl::Validate(const SaveEventsRequest *request) {
+  if (!request->has_event()) {
+    return {grpc::INVALID_ARGUMENT, "Event is required."};
+  }
+
+  return ValidateEvent(request->event());
+}
+
+grpc::Status GrpcEventServiceImpl::ValidateEvent(const Event &event) {
+  if (event.source_service() != "ipv4_filter") {
+    return {grpc::INVALID_ARGUMENT, "Unknown source_service."};
+  }
+  if (event.timestamp_utc().empty()) {
+    return {grpc::INVALID_ARGUMENT, "timestamp_utc is required."};
+  }
+  if (event.status() == EventStatus::UNSPECIFIED) {
+    return {grpc::INVALID_ARGUMENT, "status must be SUCCESS or ERROR"};
+  }
+  const auto &payload = event.payload();
+  if (payload.raw_line().empty()) {
+    return {grpc::INVALID_ARGUMENT, "payload raw_line is required"};
+  }
+  if (payload.filter_decision() ==
+      FilterDecision::FILTER_DECISION_UNSPECIFIED) {
+    return {grpc::INVALID_ARGUMENT,
+            "filter_decision must be 'accepted' or 'rejected'."};
+  }
+
   return {grpc::OK, ""};
 }
 

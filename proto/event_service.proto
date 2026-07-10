@@ -5,7 +5,8 @@ import "google/protobuf/timestamp.proto";
 package event_service;
 
 service EventService {
-    rpc SaveEvent(SaveEventsRequest) returns (SaveEventsResponse);
+    rpc SaveEvent(SaveEventRequest) returns (SaveEventsResponse);
+    rpc SaveEventsStream(stream SaveEventsRequest) returns (SaveEventsResponse);
     rpc GetEvents(GetEventsRequest) returns (GetEventsResponse);
     rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
 }
@@ -47,8 +48,13 @@ message EventFilter {
 
 // SaveEvent
 
-message SaveEventsRequest {
+message SaveEventRequest {
     repeated Event event = 1;
+}
+
+// streaming msg
+message SaveEventsRequest {
+    Event event = 1;
 }
 
 message SaveEventsResponse {

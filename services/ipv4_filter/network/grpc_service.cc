@@ -15,19 +15,84 @@ GrpcService::GrpcService(const std::shared_ptr<grpc::Channel> &channel,
 ////////////////////////////////////////////////////////////////////////
 
 bool GrpcService::Save(const dto::Event &event) const {
-  SaveEventsRequest request;
+  SaveEventRequest request;
   AddEventToRequest(request, event);
 
   return DoSaveRequest(request);
 }
 
 bool GrpcService::SaveBatch(std::span<const dto::Event> events) const {
-  SaveEventsRequest request;
-  for (const auto &event : events) {
-    AddEventToRequest(request, event);
+  const size_t STREAM_THRESHOLD = 10'000; // events
+
+  if (events.size() < STREAM_THRESHOLD) {
+    std::cout << "Using unary RPC for " << events.size() << " events"
+              << std::endl;
+    SaveEventRequest request;
+    for (const auto &event : events) {
+      AddEventToRequest(request, event);
+    }
+
+    return DoSaveRequest(request);
   }
 
-  return DoSaveRequest(request);
+  std::cout << "Using streaming RPC for " << events.size() << " events"
+            << std::endl;
+  return SaveBatchStream(events);
+}
+
+bool GrpcService::SaveBatchStream(std::span<const dto::Event> &events) const {
+  if (events.empty()) {
+    return true;
+  }
+
+  grpc::ClientContext context;
+  context.set_deadline(std::chrono::system_clock::now() +
+                       std::chrono::minutes(kDefaultStreamingTimeoutMin));
+
+  SaveEventsResponse response;
+  auto stream = stub_->SaveEventsStream(&context, &response);
+
+  if (!stream) {
+    std::cerr << "Failed to create stream" << std::endl;
+    return false;
+  }
+
+  size_t sent_count = 0;
+  const size_t total = events.size();
+  const size_t PROGRESS_INTERVAL = 10000;
+
+  for (const auto &event : events) {
+    SaveEventsRequest request;
+    *request.mutable_event() = ToProtoEvent(event);
+
+    if (!stream->Write(request)) {
+      std::cerr << "Failed to write event at index " << sent_count << std::endl;
+      return false;
+    }
+
+    sent_count++;
+
+    if (sent_count % PROGRESS_INTERVAL == 0 || sent_count == total) {
+      std::cout << "Progress: " << sent_count << "/" << total << " ("
+                << (sent_count * 100 / total) << "%)" << std::endl;
+    }
+  }
+
+  stream->WritesDone();
+  grpc::Status status = stream->Finish();
+
+  if (!status.ok()) {
+    std::cerr << "gRPC error: " << status.error_message() << std::endl;
+    return false;
+  }
+  if (!response.success()) {
+    std::cerr << "Server error: " << response.message() << std::endl;
+    return false;
+  }
+
+  std::cout << "Successfully saved " << sent_count << " events (stream)"
+            << std::endl;
+  return true;
 }
 
 void GrpcService::HandleSaveEventsResponse(const grpc::Status &status,
@@ -50,14 +115,14 @@ void GrpcService::HandleSaveEventsResponse(const grpc::Status &status,
             << std::endl;
 }
 
-void GrpcService::AddEventToRequest(SaveEventsRequest &request,
+void GrpcService::AddEventToRequest(SaveEventRequest &request,
                                     const dto::Event &event) {
   /* ok pattern: protobuf handles this raw ptrs (arena buffer) */
   auto *eventReq = request.add_event();
   *eventReq = ToProtoEvent(event);
 }
 
-bool GrpcService::DoSaveRequest(const SaveEventsRequest &request) const {
+bool GrpcService::DoSaveRequest(const SaveEventRequest &request) const {
   SaveEventsResponse response;
   grpc::ClientContext context;
   context.set_deadline(std::chrono::system_clock::now() +
