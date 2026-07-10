@@ -4,6 +4,7 @@
 #include "event.h"
 #include "result.h"
 #include <optional>
+#include <string>
 
 PostgresEventsRepo::PostgresEventsRepo(std::shared_ptr<pqxx::connection> conn)
     : conn_(std::move(conn)) {
@@ -64,7 +65,7 @@ PostgresEventsRepo::SaveEvents(std::span<const dto::Event> events) {
 
       const auto &payload = event.payload;
       pqxx::params params;
-      params.append(event_id);
+      params.append(std::to_string(event_id));
       params.append(payload.raw_line);
       payload.parsed_ip.has_value() ? params.append(*payload.parsed_ip)
                                     : params.append();
