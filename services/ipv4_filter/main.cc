@@ -20,10 +20,23 @@
 
 namespace {
 
+// Retry only idempotent methods
+// Transparent retries still can be made
 // clang-format off
 [[maybe_unused]] constexpr absl::string_view kRetryPolicy = 
     "{\"methodConfig\" : [{"
-    "   \"name\" : [{\"service\": \"event_service.EventService\"}],"
+    "   \"name\" : [{\"service\": \"event_service.EventService\",\"method\":\"GetEvents\"}],"
+    "   \"waitForReady\": true,"
+    "   \"retryPolicy\": {"
+    "     \"maxAttempts\": 4,"
+    "     \"initialBackoff\": \"0.1s\","
+    "     \"maxBackoff\": \"1s\","
+    "     \"backoffMultiplier\": 2.0,"
+    "     \"retryableStatusCodes\": [\"UNAVAILABLE\"]"
+    "    }"
+    "},"
+    "{"
+    "   \"name\" : [{\"service\": \"event_service.EventService\",\"method\":\"GetStats\"}],"
     "   \"waitForReady\": true,"
     "   \"retryPolicy\": {"
     "     \"maxAttempts\": 4,"
