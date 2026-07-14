@@ -11,6 +11,7 @@
 #include "get_events_use_case.h"
 #include "get_stats_use_case.h"
 #include "grpc_event_service_impl.h"
+#include "pg_conn_pool.h"
 #include "postgres_events_repo.h"
 #include "save_event_use_case.h"
 
@@ -45,7 +46,7 @@ std::string MakeDbConnectionString(const PgSettings &env) {
 }
 
 std::string GetServerPortOr50051() {
-  const auto* const chars = std::getenv("SERVER_PORT");
+  const auto *const chars = std::getenv("SERVER_PORT");
   return (nullptr != chars) ? chars : "50051";
 }
 
@@ -60,10 +61,11 @@ int main() {
     std::string conn_str = MakeDbConnectionString(env);
     std::cout << "Connecting to: " << env.host << ":" << env.port << "..."
               << "\n";
-    auto db_conn = std::make_shared<pqxx::connection>(conn_str);
-    std::cout << "Connected to: " << db_conn->dbname() << "\n";
 
-    auto postgres_repo = std::make_shared<PostgresEventsRepo>(db_conn);
+    const auto kPgConnections = 5;
+    auto pool = CreatePreparedPool(conn_str, kPgConnections, PrepareStatements);
+
+    auto postgres_repo = std::make_shared<PostgresEventsRepo>(pool);
     auto save_event_handler = std::make_shared<SaveEventUseCase>(postgres_repo);
     auto get_events_handler = std::make_shared<GetEventsUseCase>(postgres_repo);
     auto get_stats_handler = std::make_shared<GetStatsUseCase>(postgres_repo);

@@ -6,39 +6,37 @@
 #include <optional>
 #include <string>
 
-PostgresEventsRepo::PostgresEventsRepo(std::shared_ptr<pqxx::connection> conn)
-    : conn_(std::move(conn)) {
-  PrepareStatements();
-}
+PostgresEventsRepo::PostgresEventsRepo(std::shared_ptr<ConnectionPool> pool)
+    : pool_(std::move(pool)) {}
 
-void PostgresEventsRepo::PrepareStatements() {
-  conn_->prepare("insert_event",
-                 "INSERT INTO events (source_service, timestamp_utc, status) "
-                 "VALUES ($1, $2, $3) RETURNING id");
+void PrepareStatements(pqxx::connection &conn) {
+  conn.prepare("insert_event",
+               "INSERT INTO events (source_service, timestamp_utc, status) "
+               "VALUES ($1, $2, $3) RETURNING id");
 
-  conn_->prepare("insert_payload", "INSERT INTO payloads (event_id, raw_line, "
-                                   "parsed_ip, filter_decision, reject_reason) "
-                                   "VALUES ($1, $2, $3, $4, $5)");
+  conn.prepare("insert_payload", "INSERT INTO payloads (event_id, raw_line, "
+                                 "parsed_ip, filter_decision, reject_reason) "
+                                 "VALUES ($1, $2, $3, $4, $5)");
 
   // returns 1 billion events MAX if no limit
-  conn_->prepare("get_events",
-                 "SELECT e.id, e.source_service, e.timestamp_utc, e.status, "
-                 "p.raw_line, p.parsed_ip, p.filter_decision, p.reject_reason "
-                 "FROM events e "
-                 "LEFT JOIN payloads p ON e.id = p.event_id "
-                 "WHERE e.source_service = COALESCE($1, e.source_service) "
-                 "AND e.timestamp_utc >= COALESCE($2, e.timestamp_utc) " // from
-                 "AND e.timestamp_utc <= COALESCE($3, e.timestamp_utc) " // to
-                 "AND e.status = COALESCE($4, e.status) "
-                 "ORDER BY e.timestamp_utc "
-                 "LIMIT COALESCE($5, 1e9) OFFSET GREATEST(COALESCE($6, 0), 0)");
+  conn.prepare("get_events",
+               "SELECT e.id, e.source_service, e.timestamp_utc, e.status, "
+               "p.raw_line, p.parsed_ip, p.filter_decision, p.reject_reason "
+               "FROM events e "
+               "LEFT JOIN payloads p ON e.id = p.event_id "
+               "WHERE e.source_service = COALESCE($1, e.source_service) "
+               "AND e.timestamp_utc >= COALESCE($2, e.timestamp_utc) " // from
+               "AND e.timestamp_utc <= COALESCE($3, e.timestamp_utc) " // to
+               "AND e.status = COALESCE($4, e.status) "
+               "ORDER BY e.timestamp_utc "
+               "LIMIT COALESCE($5, 1e9) OFFSET GREATEST(COALESCE($6, 0), 0)");
 
-  conn_->prepare("get_stats",
-                 "SELECT "
-                 "  COUNT(*) AS total, "
-                 "  COUNT(*) FILTER (WHERE status = 'success') AS success, "
-                 "  COUNT(*) FILTER (WHERE status = 'error') AS error "
-                 "FROM events");
+  conn.prepare("get_stats",
+               "SELECT "
+               "  COUNT(*) AS total, "
+               "  COUNT(*) FILTER (WHERE status = 'success') AS success, "
+               "  COUNT(*) FILTER (WHERE status = 'error') AS error "
+               "FROM events");
 }
 
 shared::Result<>
@@ -48,9 +46,10 @@ PostgresEventsRepo::SaveEvents(std::span<const dto::Event> events) {
     return shared::Result<>::Ok();
   }
 
-  pqxx::work txn(*conn_);
+  auto conn = pool_->Acquire();
 
   try {
+    pqxx::work txn(*conn);
     for (const auto &event : events) {
 
       auto res =
@@ -87,7 +86,8 @@ PostgresEventsRepo::SaveEvents(std::span<const dto::Event> events) {
 shared::Result<std::vector<dto::Event>>
 PostgresEventsRepo::GetEvents(const std::optional<dto::EventFilter> &filter) {
   try {
-    pqxx::read_transaction txn(*conn_);
+    auto conn = pool_->Acquire();
+    pqxx::read_transaction txn(*conn);
     pqxx::result res;
 
     if (filter.has_value()) {
@@ -100,9 +100,9 @@ PostgresEventsRepo::GetEvents(const std::optional<dto::EventFilter> &filter) {
       filter->status.has_value()
           ? params.append(dto::Event::StatusToStr(filter->status.value()))
           : params.append();
-      filter->limit.has_value() ? params.append(*filter->limit)
+      filter->limit.has_value() ? params.append(std::to_string(*filter->limit))
                                 : params.append();
-      filter->offset.has_value() ? params.append(*filter->offset)
+      filter->offset.has_value() ? params.append(std::to_string(*filter->offset))
                                  : params.append();
 
       res = txn.exec(pqxx::prepped{"get_events"}, params);
@@ -155,7 +155,8 @@ PostgresEventsRepo::GetEvents(const std::optional<dto::EventFilter> &filter) {
 
 shared::Result<dto::Stats> PostgresEventsRepo::GetStats() {
   try {
-    pqxx::read_transaction txn(*conn_);
+    auto conn = pool_->Acquire();
+    pqxx::read_transaction txn(*conn);
 
     auto res = txn.exec(pqxx::prepped{"get_stats"});
 
@@ -167,7 +168,7 @@ shared::Result<dto::Stats> PostgresEventsRepo::GetStats() {
     enum Query { TOTAL = 0, SUCCESS, ERROR };
     const auto &row = res[0];
 
-    dto::Stats stats;
+    dto::Stats stats{};
     stats.events_total = row[Query::TOTAL].as<std::size_t>();
     stats.events_success = row[Query::SUCCESS].as<std::size_t>();
     stats.events_error = row[Query::ERROR].as<std::size_t>();
