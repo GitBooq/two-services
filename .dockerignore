@@ -1,0 +1,11 @@
+.git
+.gitignore
+.vscode
+.docs
+.devcontainer
+
+build
+cmake-build-*
+CMakeCache.txt
+CMakeFiles
+README.md

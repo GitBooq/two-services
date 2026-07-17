@@ -1,0 +1,12 @@
+Diagnostics:
+  ClangTidy:
+    Add: 
+      - performance-*
+      - modernize-*
+      - readability-*
+      - google-*
+      - cppcoreguidelines-*
+      - clang-analyzer-*
+      - bugprone-*
+    Remove:
+      - modernize-use-trailing-return-type
